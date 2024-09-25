@@ -48,7 +48,7 @@ def start(message):
     if len(args) > 1 and args[1] == 'participate':
         condition = get_conditions_text()
         if condition:
-            response_text = f"{condition.text}\n\n{condition.link}Дякуємо за участь!"
+            response_text = f"{condition.text}\n\n{condition.link}"
         else:
             response_text = "Умови відсутні."
 
