@@ -41,22 +41,21 @@ def telegram_webhook(request):
             logger.error(f"Помилка обробки вебхуку: {str(e)}")
 
 
-def get_conditions():
-    condition = Conditions.objects.first()
-    return condition.text if condition else "Немає умов."
-
-
 @bot.message_handler(commands=['start'])
 def start(message):
     chat_id = message.chat.id
-    conditions_text = get_conditions()
-    bot.send_message(chat_id, f"Умови конкурсу 👇\n\n{conditions_text}", reply_markup=create_reply_markup())
+    args = message.text.split()
+    if len(args) > 1 and args[1] == 'participate':
+        condition = get_conditions_text()
+        if condition:
+            response_text = f"{condition.text}\n\nДякуємо за участь!"
+        else:
+            response_text = "Умови відсутні."
 
-
-def create_reply_markup():
-    markup = ReplyKeyboardMarkup(resize_keyboard=True, row_width=2)
-    markup.add(KeyboardButton('✅ Прийняти участь ✅'))
-    return markup
+        bot.send_message(chat_id, response_text)
+        save_user_profile(chat_id, message.from_user.username, message.from_user.first_name)
+    else:
+        bot.send_message(chat_id, f"Ви вже берете участь!")
 
 
 def get_conditions_text():
@@ -73,20 +72,3 @@ def save_user_profile(user_id, username, name):
         user.username = username or user.username
         user.name = name or user.name
         user.save()
-
-
-@bot.message_handler(func=lambda message: message.text == "✅ Прийняти участь ✅")
-def accept_participation(message):
-    chat_id = message.chat.id
-    username = message.from_user.username
-    name = message.from_user.first_name
-
-    condition = get_conditions_text()
-    if condition:
-        response_text = f"{condition.text}\n\nПосилання: {condition.link}"
-    else:
-        response_text = "Умови відсутні."
-
-    bot.send_message(chat_id, response_text)
-
-    save_user_profile(chat_id, username, name)
